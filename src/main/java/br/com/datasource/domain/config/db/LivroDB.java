@@ -1,4 +1,4 @@
-package br.com.datasource.domain.config;
+package br.com.datasource.domain.config.db;
 
 import java.util.HashMap;
 
@@ -11,39 +11,38 @@ import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import br.com.datasource.domain.model.book.Livro;
+import br.com.datasource.domain.repository.book.Livros;
+
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(entityManagerFactoryRef = "entityManagerFactory", basePackages = { "br.com.datasource.domain.repository.user" })
-public class UsuarioDBConfig {
+@EnableJpaRepositories(entityManagerFactoryRef = "livroEntityManagerFactory", transactionManagerRef = "livroTransactionManager", basePackageClasses = { Livros.class })
+public class LivroDB {
 	
-	@Primary
-	@Bean(name = "dataSource")
-	@ConfigurationProperties(prefix = "spring.usuario.datasource")
+	@Bean(name = "livroDataSource")
+	@ConfigurationProperties(prefix = "spring.livro.datasource")
 	public DataSource dataSource() {
 		return DataSourceBuilder.create().build();
 	}
 
-	@Primary
-	@Bean(name = "entityManagerFactory")
-	public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("dataSource") DataSource dataSource) {
+	@Bean(name = "livroEntityManagerFactory")
+	public LocalContainerEntityManagerFactoryBean livroEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("livroDataSource") DataSource dataSource) {
 		HashMap<String, Object> properties = new HashMap<>();
 		properties.put("hibernate.hbm2ddl.auto", "update");
 		properties.put("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
 		
-		return builder.dataSource(dataSource).properties(properties).packages("br.com.datasource.domain.model.user").persistenceUnit("Usuario").build();
+		return builder.dataSource(dataSource).properties(properties).packages(Livro.class).persistenceUnit("datasource02PU").build();
 	}
 
-	@Primary
-	@Bean(name = "transactionManager")
-	public PlatformTransactionManager transactionManager(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
-		return new JpaTransactionManager(entityManagerFactory);
+	@Bean(name = "livroTransactionManager")
+	public PlatformTransactionManager livroTransactionManager(@Qualifier("livroEntityManagerFactory") EntityManagerFactory livroEntityManagerFactory) {
+		return new JpaTransactionManager(livroEntityManagerFactory);
 	}
 
 }
